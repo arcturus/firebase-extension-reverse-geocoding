@@ -1,0 +1,111 @@
+name: firestore-extension-reverse-geocoding  # Identifier for your extension
+version: 0.0.1  # Follow semver versioning
+specVersion: v1beta  # Version of the Firebase Extensions specification
+
+# Friendly display name for your extension (~3-5 words)
+displayName: Reverse Geocoding
+
+# Brief description of the task your extension performs (~1 sentence)
+description: >-
+  Given a document with a latitude and longitude, add an attribute to the document with the address for that point.
+
+license: Apache-2.0  # https://spdx.org/licenses/
+
+# Public URL for the source code of your extension
+sourceUrl: https://github.com/firebase/firebase-tools/tree/master/templates/extensions
+
+# Specify whether a paid-tier billing plan is required to use your extension.
+# As we will performing calls to an external service the paid-tier will be necessary for this extension.
+billingRequired: true
+
+# In a `roles` field, list any IAM access roles required for your extension to operate.
+roles:
+  - role: datastore.user
+    reason: Allows the extension to write to your Firestore Database instance.
+
+# In the `resources` field, list each of your extension's functions, including the trigger for each function.
+resources:
+  - name: fsreversegeocoding
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for new documents on the path specified via configuration, will look for latitude and longitude
+      parameters and resolve them to a concrete address.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs12
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
+
+# In the `params` field, set up your extension's user-configured parameters.
+params:
+  - param: LOCATION
+    label: Cloud Functions location
+    description: >-
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+    immutable: true
+
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection that contains the latitude and longitued that you want to analyze?
+    example: items
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    default: items
+    required: true
+
+  - param: LATITUDE_FIELD_NAME
+    label: Latitude field name
+    description: >
+      What is the name of the field that contains latitude value. Accepts dot notation.
+    example: lat
+    default: lat
+    required: true
+
+  - param: LONGITUDE_FIELD_NAME
+    label: Longitude field name
+    description: >
+      What is the name of the field that contains the longitude value. Accepts dot notation.
+    example: lon
+    default: lon
+    required: true
+  
+  - param: OUTPUT_FIELD_NAME
+    label: Output field
+    description: >
+      What is the name of the field where you want to store your reverse geocoding components.
+    example: reverse_geo
+    default: reverse_geo
+    required: true
+
+  - param: GOOGLE_MAPS_API_KEY
+    label: Google Maps Key
+    description: >
+      Google Maps Api Key used to request the reverse geocoding.
+    example: XXX
+    default: null
+    required: true
